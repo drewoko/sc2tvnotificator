@@ -6,5 +6,5 @@ Feel free to pull request :)
 
 ## Author
 
-Deniss Gubanov
+Deniss Gubanov :grumpy:
 deniss@gubanov.ee
