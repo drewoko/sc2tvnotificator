@@ -127,6 +127,7 @@ public class ListenChat {
                                                         .put("name", currentMessage.getString("name"))
                                                         .put("message", currentMessage.getString("message"))
                                                         .put("location", site)
+                                                        .put("date", currentMessage.getString("date"))
                                         )
                                         .toString()
                         )
