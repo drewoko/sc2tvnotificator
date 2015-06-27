@@ -23,19 +23,18 @@ public class ListenController {
 
     @RequestMapping(value = "/set", method = RequestMethod.POST)
     public void setListen(
-            @RequestBody SetRequest setRequest
+        @RequestBody SetRequest setRequest
     ) {
 
-        logger.info("Set request");
+        logger.info("Tag set request: " + setRequest.getTags().toString());
 
         try {
             sessionRepository.setTagList(
                     setRequest.getSessionId(),
-                    setRequest.getTags() == null ? new ArrayList<String>() : setRequest.getTags()
+                    setRequest.getTags() == null ? new ArrayList<>() : setRequest.getTags()
             );
         } catch (NullPointerException ignored) {
         }
-
 
     }
 

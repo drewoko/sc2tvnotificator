@@ -10,7 +10,7 @@ import org.springframework.context.annotation.ComponentScan;
  * Package: ee.drewoko.sc2tvnotificator
  */
 @SpringBootApplication
-@ComponentScan
+@ComponentScan(basePackages = "ee.drewoko.sc2tvnotificator")
 public class Bootstrap {
 
     public static void main(String[] args) {

@@ -1,13 +1,10 @@
 package ee.drewoko.sc2tvnotificator.web;
 
 import ee.drewoko.sc2tvnotificator.core.SessionRepository;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.socket.*;
 
-import javax.annotation.Resource;
 import java.util.ArrayList;
 
 /**
@@ -15,48 +12,47 @@ import java.util.ArrayList;
  * Project: sc2tvnotificator
  * Package: ee.drewoko.sc2tvnotificator.web
  */
-public class ListenWebSocketHandler extends TextWebSocketHandler {
+public class ListenWebSocketHandler implements WebSocketHandler {
 
-    @Resource
+    @Autowired
     SessionRepository sessionRepository;
 
     @Override
-    public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    public void afterConnectionEstablished(WebSocketSession webSocketSession) throws Exception {
 
-        try {
+        webSocketSession.sendMessage(
+                new TextMessage(
+                        new JSONObject()
+                                .put("action", "auth")
+                                .put("id", webSocketSession.getId())
+                                .toString()
+                )
+        );
 
-            JSONObject jsonMessage = new JSONObject(message.getPayload());
+        sessionRepository.putSession(
+                webSocketSession.getId(),
+                new ArrayList<>(),
+                webSocketSession
+        );
+    }
 
-            if(jsonMessage.getString("action").equals("auth")) {
-
-                session.sendMessage(
-                        new TextMessage(
-                                new JSONObject()
-                                        .put("action", "auth")
-                                        .put("id", session.getId())
-                                        .toString()
-                        )
-                );
-
-                sessionRepository.putSession(
-                        session.getId(),
-                        new ArrayList<>(),
-                        session
-                );
-
-            }
-
-
-        } catch (JSONException ignored) {
-
-        }
+    @Override
+    public void handleMessage(WebSocketSession webSocketSession, WebSocketMessage<?> webSocketMessage) throws Exception {
 
     }
 
+    @Override
+    public void handleTransportError(WebSocketSession webSocketSession, Throwable throwable) throws Exception {
 
+    }
 
+    @Override
+    public void afterConnectionClosed(WebSocketSession webSocketSession, CloseStatus closeStatus) throws Exception {
 
+    }
 
-
-
+    @Override
+    public boolean supportsPartialMessages() {
+        return false;
+    }
 }

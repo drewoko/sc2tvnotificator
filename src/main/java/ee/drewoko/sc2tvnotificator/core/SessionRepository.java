@@ -1,6 +1,5 @@
 package ee.drewoko.sc2tvnotificator.core;
 
-
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -16,8 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class SessionRepository {
 
-    private Map<String, List<String>> tagList = new ConcurrentHashMap<String, List<String>>();
-    private Map<String, WebSocketSession> sessionList = new ConcurrentHashMap<String, WebSocketSession>();
+    private Map<String, List<String>> tagList = new ConcurrentHashMap<>();
+    private Map<String, WebSocketSession> sessionList = new ConcurrentHashMap<>();
 
     public void putSession(String sessionId, List<String> tags, WebSocketSession sessions) {
         sessionList.put(sessionId, sessions);
@@ -40,6 +39,5 @@ public class SessionRepository {
     public WebSocketSession getWebSocketSession(String sessionId) {
         return sessionList.get(sessionId);
     }
-
 
 }

@@ -1,9 +1,7 @@
 package ee.drewoko.sc2tvnotificator.core;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import ee.drewoko.ApacheHttpWrapper.ApacheHttpWrapper;
+import ee.drewoko.ApacheHttpWrapper.ApacheHttpWrapperResponse;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -13,9 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 
 import javax.annotation.Resource;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 
@@ -30,8 +26,6 @@ public class ListenChat {
 
     private static final Logger logger = Logger.getLogger(ListenChat.class);
 
-    private static final String USERAGENT = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
-
     private int lastMessageId = 0;
 
     @Resource
@@ -45,61 +39,44 @@ public class ListenChat {
 
         logger.info("Reading SC2TV.ru chat");
 
-        CloseableHttpClient httpClient = HttpClients.createDefault();
+        ApacheHttpWrapper httpRequest = new ApacheHttpWrapper("http://chat.sc2tv.ru/memfs/channel-moderator.json");
+        ApacheHttpWrapperResponse response = httpRequest.exec();
 
-        HttpGet httpGet = new HttpGet("http://chat.sc2tv.ru/memfs/channel-moderator.json");
-        httpGet.addHeader("User-Agent", USERAGENT);
+        JSONArray messageJson = response.getResponseJson().getJSONArray("messages");
 
-        try {
-            HttpResponse response = httpClient.execute(httpGet);
+        if(lastMessageId == 0)
+            lastMessageId = Integer.parseInt(
+                    messageJson.getJSONObject(0).getString("id")
+            );
+        else {
 
-            BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+            Map<String, List<String>> tagList = sessionRepository.getTagList();
 
-            StringBuilder result = new StringBuilder();
-            String line;
+            if(tagList.size() > 0) {
+                for (int i = (messageJson.length() - 1); i >= 0; i--) {
 
-            while ((line = rd.readLine()) != null)
-                result.append(line);
+                    JSONObject currentMessage = messageJson.getJSONObject(i);
 
-            JSONArray messageJson = new JSONObject(result.toString()).getJSONArray("messages");
+                    int currentMessageId = Integer.parseInt(currentMessage.getString("id"));
 
-            if(lastMessageId == 0)
-                lastMessageId = Integer.parseInt(
-                        messageJson.getJSONObject(0).getString("id")
-                );
-            else {
+                    if ( currentMessageId > lastMessageId ) {
 
-                Map<String, List<String>> tagList = sessionRepository.getTagList();
+                        lastMessageId = currentMessageId;
 
-                if(tagList.size() > 0) {
-                    for (int i = (messageJson.length() - 1); i >= 0; i--) {
+                        String message = currentMessage.getString("message").toLowerCase();
 
-                        JSONObject currentMessage = messageJson.getJSONObject(i);
+                        for (Map.Entry<String, List<String>> entry : tagList.entrySet()) {
+                            String socketId = entry.getKey();
+                            List<String> tags = entry.getValue();
 
-                        int currentMessageId = Integer.parseInt(currentMessage.getString("id"));
+                            tags.stream().filter(message::contains).forEach(e -> sendNotification(e, socketId, currentMessage));
 
-                        if ( currentMessageId > lastMessageId ) {
-
-                            lastMessageId = currentMessageId;
-
-                            String message = currentMessage.getString("message").toLowerCase();
-
-                            for (Map.Entry<String, List<String>> entry : tagList.entrySet()) {
-                                String socketId = entry.getKey();
-                                List<String> tags = entry.getValue();
-
-                                tags.stream().filter(message::contains).forEach(e -> sendNotification(e, socketId, currentMessage));
-
-                            }
                         }
-
                     }
-                }
 
+                }
             }
 
-
-        } catch (IOException ignored) {
         }
 
     }

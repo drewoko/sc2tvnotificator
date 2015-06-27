@@ -1,7 +1,6 @@
-
 var sessionId;
 
-var app = angular.module('main', ['ngTagsInput', 'ngCookies']);
+var app = angular.module('main', ['ngTagsInput']);
 
 app.filter('reverse', function() {
     return function(items) {
@@ -9,18 +8,31 @@ app.filter('reverse', function() {
     };
 });
 
-app.controller("general", function($scope, $http, $sce, $cookies, $cookieStore) {
+app.controller("general", function($scope, $http, $sce) {
 
     $scope.mentions = [];
 
-    $scope.sound = true;
-    $scope.soundImg = "/img/pause.png";
+    var soundNotificationsCookie = Cookies.get("soundNotifications");
+    var browserNotificationsCookie = Cookies.get("browserNotifications");
 
-    var cookieTags = $cookieStore.get("tags");
+    $scope.soundNotifications = soundNotificationsCookie == undefined ? true : (soundNotificationsCookie == "true");
+    $scope.browserNotifications = browserNotificationsCookie == undefined ? true : (browserNotificationsCookie == "true");
+
+    $('#switchSound').attr('checked', $scope.soundNotifications).on('switchChange.bootstrapSwitch', function(event, state) {
+        $scope.soundNotifications = state;
+        Cookies.set('soundNotifications', state);
+    });
+
+    $('#switchBrowserNotification').attr('checked', $scope.browserNotifications).on('switchChange.bootstrapSwitch', function(event, state) {
+        $scope.browserNotifications = state;
+        Cookies.set('browserNotifications', state);
+    });
+
+
+    var cookieTags = Cookies.getJSON('tags');
 
     if(cookieTags == undefined)
         cookieTags = [];
-
 
     $scope.tags = cookieTags;
 
@@ -39,22 +51,9 @@ app.controller("general", function($scope, $http, $sce, $cookies, $cookieStore) 
     }
 
     var socket = null;
-    var recInterval = null;
 
     var new_conn = function() {
         socket = new SockJS('/listen');
-
-        socket.onopen = function () {
-
-            clearInterval(recInterval);
-
-            socket.send(
-                JSON.stringify({
-                    "action": "auth"
-                })
-            );
-
-        };
 
         socket.onmessage = function (e) {
 
@@ -83,22 +82,22 @@ app.controller("general", function($scope, $http, $sce, $cookies, $cookieStore) 
 
                     if(Notification.permission == "granted") {
 
-                        var notification = new Notification(jsonMessage.data.name, {
-                            icon: notificationImage,
-                            body: processedText.replace(/(<([^>]+)>)/ig,"").trim()
-                        });
+                        if($scope.browserNotifications) {
+                            var notification = new Notification(jsonMessage.data.name, {
+                                icon: notificationImage,
+                                body: processedText.replace(/(<([^>]+)>)/ig,"").trim()
+                            });
 
-                        setTimeout(function() {
-                            notification.close();
-                        }, 10000);
+                            setTimeout(function() {
+                                notification.close();
+                            }, 10000);
 
-                        notification.onclick = function() {
-                            window.open(jsonMessage.data.location);
+                            notification.onclick = function() {
+                                window.open(jsonMessage.data.location);
+                            }
                         }
 
                     }
-
-
 
                     jsonMessage.data.message = $sce.trustAsHtml(processedText);
 
@@ -106,9 +105,8 @@ app.controller("general", function($scope, $http, $sce, $cookies, $cookieStore) 
                         jsonMessage.data
                     );
 
-                    if($scope.sound)
+                    if($scope.soundNotifications)
                         document.getElementById('soundalert').play();
-
 
                     $scope.$apply();
                 }
@@ -118,7 +116,7 @@ app.controller("general", function($scope, $http, $sce, $cookies, $cookieStore) 
         };
 
         socket.onclose = function () {
-            new_conn();
+            setTimeout(new_conn, 4000);
         };
     };
 
@@ -132,10 +130,12 @@ app.controller("general", function($scope, $http, $sce, $cookies, $cookieStore) 
         var tagArray = [];
 
         for(key in $scope.tags) {
-            tagArray.push($scope.tags[key].text.toLowerCase());
+            var tag = $scope.tags[key].text.toLowerCase();
+            ga('send', 'event', 'tags', tag);
+            tagArray.push(tag);
         }
 
-        $cookieStore.put("tags", tagArray);
+        Cookies.set("tags", tagArray);
 
         $http.post("/set", {
             "tags": tagArray,
@@ -144,13 +144,14 @@ app.controller("general", function($scope, $http, $sce, $cookies, $cookieStore) 
 
     };
 
+    $scope.openSettings = function() {
+        $('#settingsModal').modal('show');
+    };
 
-    $scope.soundSwitcher = function() {
-        $scope.sound = !$scope.sound;
-        $scope.soundImg = $scope.sound ? "/img/pause.png" : "/img/play.png" ;
-    }
+    $(".switch").bootstrapSwitch({
+        size: 'mini'
+    });
 
 
 
 });
-

@@ -13,7 +13,6 @@ public class SetRequest {
     private ArrayList<String> tags;
 
     public SetRequest() {
-
     }
 
     public SetRequest(String sessionId, ArrayList<String> tags) {
