@@ -69,7 +69,9 @@ public class ListenChat {
                             String socketId = entry.getKey();
                             List<String> tags = entry.getValue();
 
-                            tags.stream().filter(message::contains).forEach(e -> sendNotification(e, socketId, currentMessage));
+                            tags.stream()
+                                    .filter(tag -> tagMatcher(currentMessage, message, tag))
+                                    .forEach(e -> sendNotification(e, socketId, currentMessage));
 
                         }
                     }
@@ -79,6 +81,13 @@ public class ListenChat {
 
         }
 
+    }
+
+    private boolean tagMatcher(JSONObject currentMessage, String message, String tag) {
+
+        return tag.startsWith(":u:") ?
+                currentMessage.getString("name").equalsIgnoreCase(tag.replace(":u:", "")) :
+                message.contains(tag);
     }
 
     private void sendNotification(String tag, String sessionId, JSONObject currentMessage)  {
