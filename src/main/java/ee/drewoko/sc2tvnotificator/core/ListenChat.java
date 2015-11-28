@@ -1,17 +1,22 @@
 package ee.drewoko.sc2tvnotificator.core;
 
 import ee.drewoko.ApacheHttpWrapper.ApacheHttpWrapper;
+import ee.drewoko.ApacheHttpWrapper.ApacheHttpWrapperMethod;
 import ee.drewoko.ApacheHttpWrapper.ApacheHttpWrapperResponse;
+import io.socket.client.IO;
+import io.socket.client.Socket;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
@@ -28,65 +33,93 @@ public class ListenChat {
 
     private int lastMessageId = 0;
 
+    private Socket socket;
+
     @Resource
     SessionRepository sessionRepository;
 
-    @Resource
-    Indexer indexer;
+    @PostConstruct
+    public void init() {
 
-    @Scheduled(fixedRate = 3000)
-    public void readChat() {
+        try {
+            IO.Options options = new IO.Options();
+            options.reconnection = true;
+            options.reconnectionDelay = 100;
+            options.reconnectionAttempts = 9999;
 
-        logger.info("Reading SC2TV.ru chat");
+            options.transports = new String[] {"websocket"};
 
-        ApacheHttpWrapper httpRequest = new ApacheHttpWrapper("http://chat.sc2tv.ru/memfs/channel-moderator.json");
-        ApacheHttpWrapperResponse response = httpRequest.exec();
+            socket = IO.socket("http://funstream.tv:3811/", options);
 
-        JSONArray messageJson = response.getResponseJson().getJSONArray("messages");
+            socket
+                    .on(Socket.EVENT_CONNECT, this::connected)
+                    .on(Socket.EVENT_DISCONNECT, args -> logger.info("WebSocket disconnected"))
+                    .on(Socket.EVENT_ERROR, args -> logger.info("WebSocket connection error"))
+                    .on(Socket.EVENT_RECONNECT, args -> logger.info("WebSocket reconnected"))
+                    .on(Socket.EVENT_RECONNECT_ATTEMPT, args -> logger.info("WebSocket reconnected attempt"))
+                    .on("/chat/message", this::readChat);
 
-        if(lastMessageId == 0)
-            lastMessageId = Integer.parseInt(
-                    messageJson.getJSONObject(0).getString("id")
-            );
-        else {
+            logger.info("WebSocket connection attempt");
+            socket.connect();
 
-            Map<String, List<String>> tagList = sessionRepository.getTagList();
-
-            if(tagList.size() > 0) {
-                for (int i = (messageJson.length() - 1); i >= 0; i--) {
-
-                    JSONObject currentMessage = messageJson.getJSONObject(i);
-
-                    int currentMessageId = Integer.parseInt(currentMessage.getString("id"));
-
-                    if ( currentMessageId > lastMessageId ) {
-
-                        lastMessageId = currentMessageId;
-
-                        String message = currentMessage.getString("message").toLowerCase();
-
-                        for (Map.Entry<String, List<String>> entry : tagList.entrySet()) {
-                            String socketId = entry.getKey();
-                            List<String> tags = entry.getValue();
-
-                            tags.stream()
-                                    .filter(tag -> tagMatcher(currentMessage, message, tag))
-                                    .forEach(e -> sendNotification(e, socketId, currentMessage));
-
-                        }
-                    }
-
-                }
-            }
-
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
         }
 
+    }
+
+    private void connected(Object[] objects) {
+        logger.info("Chat Connected");
+        join("all");
+    }
+
+    private void join(String channel) {
+        try {
+            socket.emit("/chat/join", new JSONObject().put("channel", channel));
+            logger.info("Chat joined");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void readChat(Object... mes) {
+        JSONObject currentMessage = (JSONObject) mes[0];
+        try {
+            if (lastMessageId == 0) {
+                lastMessageId = currentMessage.getInt("id");
+            } else {
+                Map<String, List<String>> tagList = sessionRepository.getTagList();
+
+                if(tagList.size() > 0) {
+                        int currentMessageId = currentMessage.getInt("id");
+
+                        if ( currentMessageId > lastMessageId ) {
+                            lastMessageId = currentMessageId;
+
+                            String message = currentMessage.getString("text").toLowerCase();
+                            for (Map.Entry<String, List<String>> entry : tagList.entrySet()) {
+                                String socketId = entry.getKey();
+                                List<String> tags = entry.getValue();
+
+                                tags.stream()
+                                        .filter(tag -> tagMatcher(currentMessage, message, tag))
+                                        .forEach(e -> sendNotification(e, socketId, currentMessage));
+
+                            }
+                        }
+                    }
+                }
+
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     private boolean tagMatcher(JSONObject currentMessage, String message, String tag) {
 
         return tag.startsWith(":u:") ?
-                currentMessage.getString("name").equalsIgnoreCase(tag.replace(":u:", "")) :
+                currentMessage.getJSONObject("from").getString("name").equalsIgnoreCase(tag.replace(":u:", "")) :
                 message.contains(tag);
     }
 
@@ -95,25 +128,24 @@ public class ListenChat {
         logger.info("Send Notification by tag: "+ tag);
 
         try {
+            String path = getStreamPath(currentMessage.getString("channel"));
 
-            String path = indexer.getIndexedPath(Integer.parseInt(currentMessage.getString("channelId")));
+            String site = path == null ? "https://funstream.tv/chat/main" : "https://funstream.tv/stream/" + path;
+            String nickname = currentMessage.get("to") instanceof JSONObject ? "[b]" + currentMessage.getJSONObject("to").getString("name") + "[/b], " : "";
 
-             String site = path == null ?
-             "http://chat.sc2tv.ru/index.htm?channelId=" + currentMessage.getString("channelId") :
-             "http://sc2tv.ru/"+path;
-
-                sessionRepository.getWebSocketSession(sessionId).sendMessage(
+                    sessionRepository.getWebSocketSession(sessionId).sendMessage(
                         new TextMessage(
                                 new JSONObject()
                                         .put("action", "mention")
                                         .put("data",
                                                 new JSONObject()
                                                         .put("id", currentMessage.getInt("id"))
-                                                        .put("channelId", currentMessage.getInt("channelId"))
-                                                        .put("name", currentMessage.getString("name"))
-                                                        .put("message", currentMessage.getString("message"))
+                                                        .put("channelId", currentMessage.getString("channel"))
+                                                        .put("name", currentMessage.getJSONObject("from").getString("name"))
+                                                        .put("message", nickname +
+                                                                        currentMessage.getString("text"))
                                                         .put("location", site)
-                                                        .put("date", currentMessage.getString("date"))
+                                                        .put("date", currentMessage.getInt("time"))
                                         )
                                         .toString()
                         )
@@ -124,4 +156,16 @@ public class ListenChat {
         }
     }
 
+    public String getStreamPath(String channelId) {
+        if(channelId.equals("main"))
+            return null;
+
+        String[] id = channelId.split("/");
+        ApacheHttpWrapper request = new ApacheHttpWrapper("https://funstream.tv/api/user", ApacheHttpWrapperMethod.POST);
+        request.setRequestBody(new JSONObject().put("id", Integer.parseInt(id[1])).toString());
+
+        ApacheHttpWrapperResponse response = request.exec();
+
+        return response.getResponseJson().getString("name");
+    }
 }
