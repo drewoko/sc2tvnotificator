@@ -21,13 +21,19 @@
         <dependency>
             <groupId>ee.drewoko</groupId>
             <artifactId>ApacheHttpWrapper</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.4</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20140107</version>
         </dependency>
+        <dependency>
+            <groupId>io.socket</groupId>
+            <artifactId>socket.io-client</artifactId>
+            <version>0.6.2</version>
+        </dependency>
+
     </dependencies>
 
     <build>
