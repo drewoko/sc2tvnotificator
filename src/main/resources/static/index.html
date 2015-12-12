@@ -53,8 +53,11 @@
             <div ng-repeat="data in mentions | reverse">
                 <div>
                     <span style="width: 30%; float: left; font-size: 18px; font-weight: bold;">{{data.name}}</span>
-                    <span style="width: 140px; float: left; font-size: 14px;">{{data.date}}</span>
-                    <a ng-href="{{data.location}}" style="float: right;">{{data.location}}</a>
+                    <span style="width: 140px; float: left; font-size: 14px;">{{data.date * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</span>
+
+                    <a ng-href="{{location}}" style="float: right;" >
+                        <span ng-bind="location"></span>
+                    </a>
                 </div>
                 <div style="clear: both;"></div>
                 <div ng-bind-html="data.message"></div>
@@ -92,6 +95,10 @@
                         <tr>
                             <td>Нотификация в браузере: </td>
                             <td><input id="switchBrowserNotification" class="switch" type="checkbox" checked></td>
+                        </tr>
+                        <tr>
+                            <td>Использовать чат funstream: </td>
+                            <td><input id="switchChatLocation" class="switch" type="checkbox" checked data-on-text="YES" data-off-text="NO"></td>
                         </tr>
                     </table>
                 </div>

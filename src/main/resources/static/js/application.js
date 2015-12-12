@@ -14,9 +14,11 @@ app.controller("general", function($scope, $http, $sce) {
 
     var soundNotificationsCookie = Cookies.get("soundNotifications");
     var browserNotificationsCookie = Cookies.get("browserNotifications");
+    var chatLocationCookie = Cookies.get("chatLocation");
 
     $scope.soundNotifications = soundNotificationsCookie == undefined ? true : (soundNotificationsCookie == "true");
     $scope.browserNotifications = browserNotificationsCookie == undefined ? true : (browserNotificationsCookie == "true");
+    $scope.chatLocation = chatLocationCookie == undefined ? false : (chatLocationCookie == "true");
 
     $('#switchSound').attr('checked', $scope.soundNotifications).on('switchChange.bootstrapSwitch', function(event, state) {
         $scope.soundNotifications = state;
@@ -28,6 +30,10 @@ app.controller("general", function($scope, $http, $sce) {
         Cookies.set('browserNotifications', state);
     });
 
+    $('#switchChatLocation').attr('checked', $scope.chatLocation).on('switchChange.bootstrapSwitch', function(event, state) {
+        $scope.chatLocation = state;
+        Cookies.set('chatLocation', state);
+    });
 
     var cookieTags = Cookies.getJSON('tags');
 
@@ -50,6 +56,13 @@ app.controller("general", function($scope, $http, $sce) {
 
     }
 
+    function setLocation(FSloc, SCloc) {
+        if($scope.chatLocation) {
+            return FSloc;
+        } else {
+            return SCloc;
+        }
+    }
     var socket = null;
 
     var new_conn = function() {
@@ -80,6 +93,8 @@ app.controller("general", function($scope, $http, $sce) {
                         }
                     }
 
+                    $scope.location = setLocation(jsonMessage.data.locationFS, jsonMessage.data.locationSC);
+
                     if(Notification.permission == "granted") {
 
                         if($scope.browserNotifications) {
@@ -93,10 +108,9 @@ app.controller("general", function($scope, $http, $sce) {
                             }, 10000);
 
                             notification.onclick = function() {
-                                window.open(jsonMessage.data.location);
+                                window.open($scope.location);
                             }
                         }
-
                     }
 
                     jsonMessage.data.message = $sce.trustAsHtml(processedText);
@@ -110,9 +124,7 @@ app.controller("general", function($scope, $http, $sce) {
 
                     $scope.$apply();
                 }
-
             }
-
         };
 
         socket.onclose = function () {
@@ -141,7 +153,6 @@ app.controller("general", function($scope, $http, $sce) {
             "tags": tagArray,
             "sessionId":  sessionId
         });
-
     };
 
     $scope.openSettings = function() {
@@ -151,7 +162,4 @@ app.controller("general", function($scope, $http, $sce) {
     $(".switch").bootstrapSwitch({
         size: 'mini'
     });
-
-
-
 });

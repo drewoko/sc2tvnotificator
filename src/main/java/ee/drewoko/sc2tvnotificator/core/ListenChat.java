@@ -6,7 +6,6 @@ import ee.drewoko.ApacheHttpWrapper.ApacheHttpWrapperResponse;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import org.apache.log4j.Logger;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -37,6 +36,9 @@ public class ListenChat {
 
     @Resource
     SessionRepository sessionRepository;
+
+    @Resource
+    Indexer indexer;
 
     @PostConstruct
     public void init() {
@@ -128,9 +130,18 @@ public class ListenChat {
         logger.info("Send Notification by tag: "+ tag);
 
         try {
-            String path = getStreamPath(currentMessage.getString("channel"));
 
-            String site = path == null ? "https://funstream.tv/chat/main" : "https://funstream.tv/stream/" + path;
+            String funstreamPath = getStreamPath(getIdFromChannel(currentMessage.getString("channel")));
+            String sc2Path = indexer.getSc2TvPath(getIdFromChannel(currentMessage.getString("channel")));
+
+            String siteFunstreamtv = funstreamPath == null ?
+                    "https://funstream.tv/chat/main" :
+                    "https://funstream.tv/stream/" + funstreamPath;
+
+            String siteSc2Tv = sc2Path == null ?
+                    "http://chat.sc2tv.ru/index.htm?channelId=" + getIdFromChannel(currentMessage.getString("channel")) :
+                    "http://sc2tv.ru/" + sc2Path;
+
             String nickname = currentMessage.get("to") instanceof JSONObject ? "[b]" + currentMessage.getJSONObject("to").getString("name") + "[/b], " : "";
 
                     sessionRepository.getWebSocketSession(sessionId).sendMessage(
@@ -144,7 +155,8 @@ public class ListenChat {
                                                         .put("name", currentMessage.getJSONObject("from").getString("name"))
                                                         .put("message", nickname +
                                                                         currentMessage.getString("text"))
-                                                        .put("location", site)
+                                                        .put("locationFS", siteFunstreamtv)
+                                                        .put("locationSC", siteSc2Tv)
                                                         .put("date", currentMessage.getInt("time"))
                                         )
                                         .toString()
@@ -156,16 +168,21 @@ public class ListenChat {
         }
     }
 
-    public String getStreamPath(String channelId) {
-        if(channelId.equals("main"))
+    public String getStreamPath(int channelId) {
+        if (channelId == 0)
             return null;
-
-        String[] id = channelId.split("/");
         ApacheHttpWrapper request = new ApacheHttpWrapper("https://funstream.tv/api/user", ApacheHttpWrapperMethod.POST);
-        request.setRequestBody(new JSONObject().put("id", Integer.parseInt(id[1])).toString());
+        request.setRequestBody(new JSONObject().put("id", channelId).toString());
 
         ApacheHttpWrapperResponse response = request.exec();
 
         return response.getResponseJson().getString("name");
+    }
+
+    private int getIdFromChannel(String channel) {
+        if(channel.equals("main"))
+            return 0;
+        String[] id = channel.split("/");
+        return Integer.parseInt(id[1]);
     }
 }
