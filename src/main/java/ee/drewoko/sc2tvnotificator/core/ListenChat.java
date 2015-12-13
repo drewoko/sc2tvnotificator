@@ -51,7 +51,7 @@ public class ListenChat {
 
             options.transports = new String[] {"websocket"};
 
-            socket = IO.socket("http://funstream.tv:3811/", options);
+            socket = IO.socket("http://funstream.tv/", options);
 
             socket
                     .on(Socket.EVENT_CONNECT, this::connected)

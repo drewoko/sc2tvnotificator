@@ -6,5 +6,10 @@ Feel free to pull request :)
 
 ## Author
 
-Deniss Gubanov :grumpy:
+Deniss Gubanov
 deniss@gubanov.ee
+
+##Contributors
+
+Hukutoss
+Panzer
