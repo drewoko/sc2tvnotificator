@@ -98,7 +98,7 @@ public class ListenChat {
                         if ( currentMessageId > lastMessageId ) {
                             lastMessageId = currentMessageId;
 
-                            String message = currentMessage.getString("text").toLowerCase();
+                            String message = ((currentMessage.get("to") instanceof JSONObject ? currentMessage.getJSONObject("to").getString("name") + ", " : "") + currentMessage.getString("text")).toLowerCase();
                             for (Map.Entry<String, List<String>> entry : tagList.entrySet()) {
                                 String socketId = entry.getKey();
                                 List<String> tags = entry.getValue();
