@@ -55,9 +55,7 @@
                     <span style="width: 30%; float: left; font-size: 18px; font-weight: bold;">{{data.name}}</span>
                     <span style="width: 140px; float: left; font-size: 14px;">{{data.date * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</span>
 
-                    <a ng-href="{{location}}" style="float: right;" >
-                        <span ng-bind="location"></span>
-                    </a>
+                    <a ng-href="{{data.location}}" style="float: right;" >{{data.location}}</a>
                 </div>
                 <div style="clear: both;"></div>
                 <div ng-bind-html="data.message"></div>
