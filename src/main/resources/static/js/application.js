@@ -93,7 +93,7 @@ app.controller("general", function($scope, $http, $sce) {
                         }
                     }
 
-                    $scope.location = setLocation(jsonMessage.data.locationFS, jsonMessage.data.locationSC);
+                    jsonMessage.data.location = setLocation(jsonMessage.data.locationFS, jsonMessage.data.locationSC);
 
                     if(Notification.permission == "granted") {
 
@@ -108,7 +108,7 @@ app.controller("general", function($scope, $http, $sce) {
                             }, 10000);
 
                             notification.onclick = function() {
-                                window.open($scope.location);
+                                window.open(jsonMessage.data.location);
                             }
                         }
                     }
