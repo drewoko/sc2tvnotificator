@@ -135,8 +135,8 @@ public class ListenChat {
             String sc2Path = indexer.getSc2TvPath(getIdFromChannel(currentMessage.getString("channel")));
 
             String siteFunstreamtv = funstreamPath == null ?
-                    "https://funstream.tv/chat/main" :
-                    "https://funstream.tv/stream/" + funstreamPath;
+                    "http://funstream.tv/chat/main" :
+                    "http://funstream.tv/stream/" + funstreamPath;
 
             String siteSc2Tv = sc2Path == null ?
                     "http://chat.sc2tv.ru/index.htm?channelId=" + getIdFromChannel(currentMessage.getString("channel")) :
@@ -171,7 +171,7 @@ public class ListenChat {
     public String getStreamPath(int channelId) {
         if (channelId == 0)
             return null;
-        ApacheHttpWrapper request = new ApacheHttpWrapper("https://funstream.tv/api/user", ApacheHttpWrapperMethod.POST);
+        ApacheHttpWrapper request = new ApacheHttpWrapper("http://funstream.tv/api/user", ApacheHttpWrapperMethod.POST);
         request.setRequestBody(new JSONObject().put("id", channelId).toString());
 
         ApacheHttpWrapperResponse response = request.exec();
