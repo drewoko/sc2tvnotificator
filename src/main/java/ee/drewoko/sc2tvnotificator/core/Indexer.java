@@ -41,9 +41,9 @@ public class Indexer {
 
     }
 
-    public String getSc2TvPath(int streamer_uid) {
-        return index.get(streamer_uid);
+    public Map<Integer, String> getIndex()
+    {
+        return index;
     }
-
 }
 

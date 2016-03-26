@@ -1,8 +1,6 @@
 package ee.drewoko.sc2tvnotificator.core;
 
-import ee.drewoko.ApacheHttpWrapper.ApacheHttpWrapper;
-import ee.drewoko.ApacheHttpWrapper.ApacheHttpWrapperMethod;
-import ee.drewoko.ApacheHttpWrapper.ApacheHttpWrapperResponse;
+import ee.drewoko.sc2tvnotificator.core.util.PathHelper;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import org.apache.log4j.Logger;
@@ -131,16 +129,10 @@ public class ListenChat {
 
         try {
 
-            String funstreamPath = getStreamPath(getIdFromChannel(currentMessage.getString("channel")));
-            String sc2Path = indexer.getSc2TvPath(getIdFromChannel(currentMessage.getString("channel")));
+            String funstreamTv = "http://funstream.tv/" + PathHelper.getFunstreamPath(currentMessage.getString("channel"));
 
-            String siteFunstreamtv = funstreamPath == null ?
-                    "http://funstream.tv/chat/main" :
-                    "http://funstream.tv/stream/" + funstreamPath;
-
-            String siteSc2Tv = sc2Path == null ?
-                    "http://chat.sc2tv.ru/index.htm?channelId=" + getIdFromChannel(currentMessage.getString("channel")) :
-                    "http://sc2tv.ru/" + sc2Path;
+            String sc2Path = PathHelper.getSc2TvPath(indexer.getIndex(), currentMessage.getString("channel"));
+            String sc2tv = sc2Path == "main" ? "http://funstream.tv/chat/main" : "http://sc2tv.ru/" + sc2Path;
 
             String nickname = currentMessage.get("to") instanceof JSONObject ? "[b]" + currentMessage.getJSONObject("to").getString("name") + "[/b], " : "";
 
@@ -153,10 +145,9 @@ public class ListenChat {
                                                         .put("id", currentMessage.getInt("id"))
                                                         .put("channelId", currentMessage.getString("channel"))
                                                         .put("name", currentMessage.getJSONObject("from").getString("name"))
-                                                        .put("message", nickname +
-                                                                        currentMessage.getString("text"))
-                                                        .put("locationFS", siteFunstreamtv)
-                                                        .put("locationSC", siteSc2Tv)
+                                                        .put("message", nickname + currentMessage.getString("text"))
+                                                        .put("locationFS", funstreamTv)
+                                                        .put("locationSC", sc2tv)
                                                         .put("date", currentMessage.getInt("time"))
                                         )
                                         .toString()
@@ -166,23 +157,5 @@ public class ListenChat {
         } catch (IllegalStateException e) {
             sessionRepository.removeActiveSession(sessionId);
         }
-    }
-
-    public String getStreamPath(int channelId) {
-        if (channelId == 0)
-            return null;
-        ApacheHttpWrapper request = new ApacheHttpWrapper("http://funstream.tv/api/user", ApacheHttpWrapperMethod.POST);
-        request.setRequestBody(new JSONObject().put("id", channelId).toString());
-
-        ApacheHttpWrapperResponse response = request.exec();
-
-        return response.getResponseJson().getString("name");
-    }
-
-    private int getIdFromChannel(String channel) {
-        if(channel.equals("main"))
-            return 0;
-        String[] id = channel.split("/");
-        return Integer.parseInt(id[1]);
     }
 }
