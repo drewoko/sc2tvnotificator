@@ -35,6 +35,7 @@
         <div>
             <div id="headEl"><h1>SC2TV.ru нотификатор</h1></div>
             <img src="img/Black_Settings.png" id="settings" ng-click="openSettings()" />
+            <img src="img/info.png" id="info" ng-click="openInformation()"/>
         </div>
 
         <div style="clear: both;"></div>
@@ -97,6 +98,36 @@
                         <tr>
                             <td>Использовать чат funstream: </td>
                             <td><input id="switchChatLocation" class="switch" type="checkbox" checked data-on-text="YES" data-off-text="NO"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="informationModal" tabindex="-1" role="dialog" aria-labelledby="myModalInfo">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalInfo">Информация по тегам</h4>
+                </div>
+                <div class="modal-body">
+                    <table style=" margin: 0 auto;">
+                        <tr>
+                            <td>:u:nickname - nickname tracking</td>
+                        </tr>
+                        <tr>
+                            <td>:i:something - ignore something</td>
+                        </tr>
+                        <tr>
+                            <td>And</td>
+                        </tr>
+                        <tr>
+                            <td>Something</td>
+                        </tr>
+                        <tr>
+                            <td>Else</td>
                         </tr>
                     </table>
                 </div>

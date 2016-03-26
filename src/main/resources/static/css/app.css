@@ -28,6 +28,16 @@ body {
     cursor: pointer;
     float: right;
     margin-top: 30px;
+    margin-right: 8px;
+}
+
+#info {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    float: right;
+    margin-top: 29px;
+    margin-right: 8px;
 }
 
 #headEl {
