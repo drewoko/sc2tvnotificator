@@ -117,10 +117,20 @@ public class ListenChat {
     }
 
     private boolean tagMatcher(JSONObject currentMessage, String message, String tag) {
-
-        return tag.startsWith(":u:") ?
-                currentMessage.getJSONObject("from").getString("name").equalsIgnoreCase(tag.replace(":u:", "")) :
-                message.contains(tag);
+        if (tag.startsWith(":")) {
+            switch (tag.charAt(1)) {
+                case 'u':
+                    return currentMessage.getJSONObject("from").getString("name").equalsIgnoreCase(tag.replace(":u:", ""));
+                case 'i':
+                    if (message.contains(tag.replace(":i:", "")))
+                        return false; //ignore
+                case 'w':
+                    String search = tag.replace(":w:", "");
+                    if (message.matches(".*\\b(" + search + ")\\b.*"))
+                        return false; //ignore
+            }
+        }
+        return message.contains(tag);
     }
 
     private void sendNotification(String tag, String sessionId, JSONObject currentMessage)  {
