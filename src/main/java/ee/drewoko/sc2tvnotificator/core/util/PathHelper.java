@@ -28,7 +28,7 @@ public class PathHelper {
     {
         if (channel.equals("main"))
         {
-            return "main";
+            return null;
         }
 
         if(channel.startsWith("room"))
