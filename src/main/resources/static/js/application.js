@@ -159,6 +159,11 @@ app.controller("general", function($scope, $http, $sce) {
         $('#settingsModal').modal('show');
     };
 
+    $scope.openInformation = function() {
+        $('#informationModal').modal('show');
+    };
+
+
     $(".switch").bootstrapSwitch({
         size: 'mini'
     });
