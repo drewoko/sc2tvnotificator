@@ -142,7 +142,7 @@ public class ListenChat {
             String funstreamTv = "http://funstream.tv/" + PathHelper.getFunstreamPath(currentMessage.getString("channel"));
 
             String sc2Path = PathHelper.getSc2TvPath(indexer.getIndex(), currentMessage.getString("channel"));
-            String sc2tv = sc2Path == "main" ? "http://funstream.tv/chat/main" : "http://sc2tv.ru/" + sc2Path;
+            String sc2tv = sc2Path == "main"? "http://funstream.tv/chat/main" : sc2Path == null ? "http://funstream.tv/" + PathHelper.getChannelLink(PathHelper.getIdFromChannel(currentMessage.getString("channel"))) : "http://sc2tv.ru/" + sc2Path;
 
             String nickname = currentMessage.get("to") instanceof JSONObject ? "[b]" + currentMessage.getJSONObject("to").getString("name") + "[/b], " : "";
 

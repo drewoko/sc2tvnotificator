@@ -21,14 +21,7 @@ public class PathHelper {
             return getRoomName(channel);
         }
 
-        int channelId = getIdFromChannel(channel);
-
-        ApacheHttpWrapper request = new ApacheHttpWrapper("http://funstream.tv/api/user", ApacheHttpWrapperMethod.POST);
-        request.setRequestBody(new JSONObject().put("id", channelId).toString());
-
-        ApacheHttpWrapperResponse response = request.exec();
-
-        return "stream/" + response.getResponseJson().getString("name");
+        return getChannelLink(getIdFromChannel(channel));
     }
 
     public static String getSc2TvPath(Map<Integer, String> index, String channel)
@@ -46,7 +39,17 @@ public class PathHelper {
         return index.get(getIdFromChannel(channel));
     }
 
-    private static String getRoomName(String channel)
+    public static String getChannelLink(int channelId)
+    {
+        ApacheHttpWrapper request = new ApacheHttpWrapper("http://funstream.tv/api/user", ApacheHttpWrapperMethod.POST);
+        request.setRequestBody(new JSONObject().put("id", channelId).toString());
+
+        ApacheHttpWrapperResponse response = request.exec();
+
+        return "stream/" + response.getResponseJson().getString("name");
+    }
+
+    public static String getRoomName(String channel)
     {
         int roomId = getIdFromChannel(channel);
 
@@ -63,7 +66,7 @@ public class PathHelper {
         return "room/" + response.getResponseJson().getString("slug");
     }
 
-    private static int getIdFromChannel(String channel)
+    public static int getIdFromChannel(String channel)
     {
         String[] id = channel.split("/");
         return Integer.parseInt(id[1]);
