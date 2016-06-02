@@ -5,10 +5,9 @@ function urlReplace(inputText) {
 
     inputText = inputText.replace(urlRegex, function(url) {
         if(url.length > 60) {
-            return '<a href="' + url + '">' + url.substr(0, 45) + '...' + url.slice(-15) + '</a>';
-        } else {
-            return '<a href="' + url + '">' + url + '</a>';
+            return '<a href="' + url + '" target="_blank">' + url.substr(0, 45) + '...' + url.slice(-15) + '</a>';
         }
+        return '<a href="' + url + '" target="_blank">' + url + '</a>';
     });
 
     inputText = inputText.replace(nicknameBoldPattern, '<b>$1</b>' );
