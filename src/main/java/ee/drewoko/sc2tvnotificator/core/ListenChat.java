@@ -46,7 +46,6 @@ public class ListenChat {
             options.reconnection = true;
             options.reconnectionDelay = 100;
             options.reconnectionAttempts = 9999;
-
             options.transports = new String[] {"websocket"};
 
             socket = IO.socket("http://funstream.tv/", options);
@@ -70,67 +69,43 @@ public class ListenChat {
 
     private void connected(Object[] objects) {
         logger.info("Chat Connected");
-        join("all");
-    }
-
-    private void join(String channel) {
-        try {
-            socket.emit("/chat/join", new JSONObject().put("channel", channel));
-            logger.info("Chat joined");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        socket.emit("/chat/join", new JSONObject().put("channel", "all"));
     }
 
     public void readChat(Object... mes) {
         JSONObject currentMessage = (JSONObject) mes[0];
-        try {
-            if (lastMessageId == 0) {
-                lastMessageId = currentMessage.getInt("id");
-            } else {
-                Map<String, List<String>> tagList = sessionRepository.getTagList();
 
-                if(tagList.size() > 0) {
-                        int currentMessageId = currentMessage.getInt("id");
+        if (lastMessageId == 0) {
+            lastMessageId = currentMessage.getInt("id");
+        } else {
 
-                        if ( currentMessageId > lastMessageId ) {
-                            lastMessageId = currentMessageId;
+            Map<String, List<String>> tagList = sessionRepository.getTagList();
 
-                            String message = ((currentMessage.get("to") instanceof JSONObject ? currentMessage.getJSONObject("to").getString("name") + ", " : "") + currentMessage.getString("text")).toLowerCase();
-                            for (Map.Entry<String, List<String>> entry : tagList.entrySet()) {
-                                String socketId = entry.getKey();
-                                List<String> tags = entry.getValue();
+            if(tagList.size() > 0) {
+                int currentMessageId = currentMessage.getInt("id");
 
-                                tags.stream()
-                                        .filter(tag -> tagMatcher(currentMessage, message, tag))
-                                        .forEach(e -> sendNotification(e, socketId, currentMessage));
+                if ( currentMessageId > lastMessageId ) {
+                    lastMessageId = currentMessageId;
 
-                            }
-                        }
+                    String message = ((currentMessage.get("to") instanceof JSONObject ? currentMessage.getJSONObject("to").getString("name") + ", " : "") + currentMessage.getString("text")).toLowerCase();
+                    for (Map.Entry<String, List<String>> entry : tagList.entrySet()) {
+                        String socketId = entry.getKey();
+                        List<String> tags = entry.getValue();
+
+                        tags.stream()
+                                .filter(tag -> tagMatcher(currentMessage, message, tag))
+                                .forEach(e -> sendNotification(e, socketId, currentMessage));
+
                     }
                 }
-
-
-        } catch (JSONException e) {
-            e.printStackTrace();
+            }
         }
     }
 
     private boolean tagMatcher(JSONObject currentMessage, String message, String tag) {
-        if (tag.startsWith(":")) {
-            switch (tag.charAt(1)) {
-                case 'u':
-                    return currentMessage.getJSONObject("from").getString("name").equalsIgnoreCase(tag.replace(":u:", ""));
-                case 'i':
-                    if (message.contains(tag.toLowerCase().replace(":i:", "")))
-                        return false; //ignore
-                case 'w':
-                    String search = tag.toLowerCase().replace(":w:", "");
-                    if (message.matches(".*\\b(" + search.toLowerCase() + ")\\b.*"))
-                        return false; //ignore
-            }
-        }
-        return message.contains(tag);
+        return tag.startsWith(":u:") ?
+                currentMessage.getJSONObject("from").getString("name").equalsIgnoreCase(tag.replace(":u:", "")) :
+                message.contains(tag);
     }
 
     private void sendNotification(String tag, String sessionId, JSONObject currentMessage)  {

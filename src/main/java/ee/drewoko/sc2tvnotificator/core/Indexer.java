@@ -25,20 +25,20 @@ public class Indexer {
 
     private Map<Integer, String> index = new HashMap<>();
 
-    @Scheduled(fixedRate = 100000)
+    @Scheduled(fixedRate = 60000)
     private void indexSc2tv() {
         logger.info("Indexing SC2TV");
 
-        ApacheHttpWrapper httpRequest = new ApacheHttpWrapper("http://sc2tv.ru/streams_list.json");
-        ApacheHttpWrapperResponse response = httpRequest.exec();
+        ApacheHttpWrapper request = new ApacheHttpWrapper("http://sc2tv.ru/streams_list.json");
+        ApacheHttpWrapperResponse exec = request.exec();
 
-        JSONArray streamsJson = response.getResponseJson().getJSONArray("streams");
+        exec.getResponseJson().getJSONArray("streams").forEach(obj -> {
+            JSONObject json = (JSONObject)obj;
 
-        for (int i = (streamsJson.length() - 1); i >= 0; i--) {
-            JSONObject currentStream = streamsJson.getJSONObject(i);
-            index.put(currentStream.getInt("streamer_uid"), currentStream.getString("path"));
-        }
-
+            if(json.get("streamer_uid") != null && json.get("path") != null) {
+                index.put(json.getInt("streamer_uid"), json.getString("path"));
+            }
+        });
     }
 
     public Map<Integer, String> getIndex()
