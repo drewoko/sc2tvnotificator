@@ -40,11 +40,6 @@ public class ChatHelper
         return index.get(getChannelId(channel));
     }
 
-    public static String getChannelName(int channelId)
-    {
-        return "stream/" + getUserName(channelId);
-    }
-
     public static String getRoomName(String channel)
     {
         int roomId = getChannelId(channel);
@@ -95,9 +90,13 @@ public class ChatHelper
         return Integer.parseInt(id[1]);
     }
 
+    public static String getChannelName(int channelId)
+    {
+        return "stream/" + getUserName(channelId);
+    }
+
     public static String buildMessage(JSONObject message)
     {
         return ((message.get("to") instanceof JSONObject ? message.getJSONObject("to").getString("name") + ", " : "") + message.getString("text")).toLowerCase();
     }
-
 }
