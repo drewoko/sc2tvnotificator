@@ -35,7 +35,7 @@ for( i = 0; i < smilesCount; i++ ) {
         '" class="chat-smile"/>';
 }
 
-function ProcessReplaces( message ) {
+function processReplaces( message ) {
 
     var message = urlReplace( message );
 
