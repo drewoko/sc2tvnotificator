@@ -32,17 +32,6 @@ public class ChannelCollector
     private void indexSc2tv() {
         logger.info("Indexing SC2TV");
 
-//        ApacheHttpWrapper request = new ApacheHttpWrapper("http://sc2tv.ru/streams_list.json");
-//        ApacheHttpWrapperResponse exec = request.exec();
-//
-//        exec.getResponseJson().getJSONArray("streams").forEach(obj -> {
-//            JSONObject json = (JSONObject)obj;
-//
-//            if(json.get("streamer_uid") != null && json.get("path") != null) {
-//                index.put(json.getInt("streamer_uid"), json.getString("path"));
-//            }
-//        });
-
         ApacheHttpWrapper request = new ApacheHttpWrapper("http://funstream.tv/api/content", ApacheHttpWrapperMethod.POST);
         request.setRequestBody(new JSONObject().put("content", "stream").put("type", "all").put("category", new JSONObject().put("slug", "top")).toString());
 
@@ -60,9 +49,6 @@ public class ChannelCollector
             });
         }
     }
-
-    //old: "channel/zepp",
-    //new: "zepp",
 
     public Map<Integer, String> getIndex()
     {

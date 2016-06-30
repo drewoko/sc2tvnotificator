@@ -119,17 +119,9 @@ public class ListenChat {
 
     private boolean tagMatcher(JSONObject currentMessage, String message, String tag, String sessionId)
     {
-        if (tag.startsWith(":u:"))
-        {
-            return currentMessage.getJSONObject("from").getString("name").equalsIgnoreCase(tag.replace(":u:", ""));
-        }
-
-//        if(tag.startsWith(":@:"))
-//        {
-//            checkUser(tag.replace(":@:", ""), sessionId, currentMessage);
-//        }
-
-        return message.contains(tag);
+        return tag.startsWith(":u:") ?
+            currentMessage.getJSONObject("from").getString("name").equalsIgnoreCase(tag.replace(":u:", "")) :
+            message.contains(tag);
     }
 
     @Scheduled(fixedRate = 10000)
@@ -160,7 +152,6 @@ public class ListenChat {
                     {
                         if (userId == result.getInt(i))
                         {
-                            //logger.info("Channel: " + channel + ", username: " + username);
                             sendSpyNotification(channel, username, sessionId);
                         }
                     }
@@ -205,9 +196,7 @@ public class ListenChat {
 
     private void sendNotification(String tag, String sessionId, JSONObject currentMessage)
     {
-
-        logger.info("Send Notification by tag: " + tag);
-
+        //logger.info("Send Notification by tag: " + tag);
         try
         {
             //stream/name

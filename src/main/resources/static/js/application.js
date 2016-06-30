@@ -58,7 +58,6 @@ app.controller("general", function($scope, $http, $sce) {
 
     function containsInUsers(name, channel) {
         if(users[name] === undefined) {
-            console.log("unknown username");
             users[name] = Array.of(channel);
             return false;
         }
@@ -92,27 +91,10 @@ app.controller("general", function($scope, $http, $sce) {
                 result = "http://sc2tv.ru/" + urlSc;
             }
         }
-
         return result;
     }
 
     var socket = null;
-
-    /*
-      type = spy
-      id = channelid
-      name = nickname
-      urlFs
-      urlSc
-
-      type = def
-      id = messageId
-      name = nickname
-      message
-      urlFs
-      urlSc
-      date
-     */
 
     var new_conn = function() {
         socket = new SockJS('/listen');
@@ -126,7 +108,7 @@ app.controller("general", function($scope, $http, $sce) {
                 $scope.changedTags();
 
             } else if (jsonMessage.action = "mention") {
-                //DEFAULT NOTIFICATION
+                //Default
                 if(jsonMessage.data.type === "def") {
                     if (!containsInMentions(jsonMessage.data.id)) {
                         var processedText = processReplaces(jsonMessage.data.message);
@@ -173,7 +155,7 @@ app.controller("general", function($scope, $http, $sce) {
                         $scope.$apply();
                     }
                 }
-                //SPY NOTIFICATION
+                //Spy
                 else if(jsonMessage.data.type === "spy") {
 
                     if(!containsInUsers(jsonMessage.data.name, jsonMessage.data.urlFs)) {
